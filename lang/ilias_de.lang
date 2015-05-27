@@ -63,6 +63,10 @@ policy_paths_rules_html#:#Regelwerk (HTML)
 policy_paths_rules_pdf#:#Regelwerk (PDF)
 info_relative_path#:#Relativer Pfad
 
+time_restriction#:#Freischaltung
+online#:#sofort Online
+restricted#:#Start- und Endzeitpunkt festlegen
+
 
 show_chat#:#Chat anzeigen
 info_show_chat#:#

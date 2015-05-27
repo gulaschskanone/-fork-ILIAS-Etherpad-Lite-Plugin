@@ -241,7 +241,8 @@ class ilObjEtherpadLite extends ilObjectPlugin
             $this->setReadOnlyID($rec["read_only_id"]); 
             $this->setReadOnly($rec["read_only"]);
             $this->setAuthorIdentification($rec["author_identification"]);
-            $this->setRequirePolicyConsent($rec["require_policy_consent"]);
+            $this->setCTAffiliated($rec["ct_affiliated"]);
+           	$this->setCTEagleEyeMail($rec["ct_eagle_eye_mail"]);
         }
     }
 	
@@ -269,8 +270,9 @@ class ilObjEtherpadLite extends ilObjectPlugin
                 " show_timeline = " . $ilDB->quote($this->getShowTimeline(), "integer"). "," . 
                 " read_only_id = " . $ilDB->quote($this->getReadOnlyID(), "text"). "," . 
                 " read_only = " . $ilDB->quote($this->getReadOnly(), "integer"). "," . 
-        		" author_identification = " . $ilDB->quote($this->getAuthorIdentification(), "text"). "," . 
-        		" require_policy_consent = " . $ilDB->quote($this->getRequirePolicyConsent(), "text").
+        		" author_identification = " . $ilDB->quote($this->getAuthorIdentification(), "text"). "," .
+        		" ct_affiliated = " . $ilDB->quote($this->getCTAffiliated(), "integer").  "," .
+        		" ct_eagle_eye_mail = " . $ilDB->quote($this->getCTEagleEyeMail(), "text").
                 " WHERE id = " . $ilDB->quote($this->getId(), "integer")
         );
     }
@@ -352,27 +354,48 @@ class ilObjEtherpadLite extends ilObjectPlugin
     	return $this->author_identification;
     }
 
-    
+
     /**
-     * Set require policy consent
+     * Set ct affiliated
      *
-     * @param    boolean			policy consent required?
+     * @param    boolean			is pad a c.t. pad
      */
-    public function setRequirePolicyConsent($a_val)
+    public function setCTAffiliated($a_val)
     {
-    	$this->require_policy_consent = $a_val;
+    	$this->ct_affiliated = $a_val;
     }
     
     /**
-     * Get author identification
+     * Get ct affiliated
      *
-     * @return    boolean			policy consent required?
+     * @return    boolean			is pad a c.t. pad
      */
-    public function getRequirePolicyConsent()
+    public function getCTAffiliated()
     {
-    	return $this->require_policy_consent;
+    	return $this->ct_affiliated;
+    }    
+    
+    /**
+     * Set eagle eye mail
+     *
+     * @param    string			eagle eye mail
+     */
+    public function setCTEagleEyeMail($a_val)
+    {
+    	$this->ct_eagle_eye_mail = $a_val;
     }
     
+    /**
+     * Get eagle eye mail
+     *
+     * @return    string			eagle eye mail
+     */
+    public function getCTEagleEyeMail()
+    {
+    	return $this->ct_eagle_eye_mail;
+    } 
+    
+     
     
     /**
      * Set etherpad lite id
