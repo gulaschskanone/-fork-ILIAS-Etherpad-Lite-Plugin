@@ -306,11 +306,11 @@ foreach($sql as $s)
 	/**
 	 * online agreement to the policies
 	 */
-	if(!$ilDB->tableColumnExists('rep_robj_xpdl_data','require_policy_consent'))
+	if(!$ilDB->tableColumnExists('rep_robj_xpdl_data','ct_affiliated'))
 	{
 		$ilDB->addTableColumn(
 			"rep_robj_xpdl_data",
-			"require_policy_consent",
+			"ct_affiliated",
 			array(
 				'type' => 'integer',
 				'length' => 1,
@@ -332,11 +332,79 @@ foreach($sql as $s)
 		'hashes' => array(
 				'type' => 'text',
 				'length' => 200
+		),
+		'datetime' => array(
+				'type' => 'timestamp'
 		)
 	);
 	
 	$ilDB->createTable("rep_robj_xpdl_user", $userTableFields, true);
 	$ilDB->addPrimaryKey("rep_robj_xpdl_user", array("username"));
 
+	
+	// admin set defaults
+	$ilDB->query("INSERT INTO `rep_robj_xpdl_adm_set` (epkey, epvalue) SELECT 'policy_paths_iprop_html','/templates/policies/iprop.html' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rep_robj_xpdl_adm_set WHERE epkey = 'policy_paths_iprop_html');");
+	$ilDB->query("INSERT INTO `rep_robj_xpdl_adm_set` (epkey, epvalue) SELECT 'policy_paths_iprop_pdf','/templates/policies/iprop.pdf' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rep_robj_xpdl_adm_set WHERE epkey = 'policy_paths_iprop_pdf');");
+	
+	$ilDB->query("INSERT INTO `rep_robj_xpdl_adm_set` (epkey, epvalue) SELECT 'policy_paths_privacy_html','/templates/policies/privacy.html' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rep_robj_xpdl_adm_set WHERE epkey = 'policy_paths_privacy_html');");
+	$ilDB->query("INSERT INTO `rep_robj_xpdl_adm_set` (epkey, epvalue) SELECT 'policy_paths_privacy_pdf','/templates/policies/privacy.pdf' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rep_robj_xpdl_adm_set WHERE epkey = 'policy_paths_privacy_pdf');");
+	
+	$ilDB->query("INSERT INTO `rep_robj_xpdl_adm_set` (epkey, epvalue) SELECT 'policy_paths_rules_html','/templates/policies/rules.html' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rep_robj_xpdl_adm_set WHERE epkey = 'policy_paths_rules_html');");
+	$ilDB->query("INSERT INTO `rep_robj_xpdl_adm_set` (epkey, epvalue) SELECT 'policy_paths_rules_pdf','/templates/policies/rules.pdf' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM rep_robj_xpdl_adm_set WHERE epkey = 'policy_paths_rules_pdf');");
+?>
 
+<#19>
+<?php
+	/**
+	 * "eagle eye" feature
+	 */
+?>
+	CREATE TABLE IF NOT EXISTS `rep_robj_xpdl_quests` (
+	`quest_id` int(4) NOT NULL auto_increment,
+	`pad_id` varchar(128) NOT NULL default '',
+	`username` varchar(128) NOT NULL default '',
+	`quest` varchar(500) NOT NULL default '',
+	`created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	PRIMARY KEY  (`quest_id`, `pad_id`)
+	);
+	
+<?php
+	if(!$ilDB->tableColumnExists('rep_robj_xpdl_data','ct_eagle_eye_mail'))
+	{
+		$ilDB->addTableColumn(
+				"rep_robj_xpdl_data",
+				"ct_eagle_eye_mail",
+				array(
+						'type' => 'text',
+						'length' => 128,
+						'notnull' => true,
+						'default' => "owner"
+				)
+		);
+	}
+/*
+	$questsTableFields = array(
+			'pad_id' => array(
+				'type' => 'text',
+				'length' => 128,
+				'notnull' => true
+			),
+			'quest_id' => array(
+				'type' => 'integer',
+				'length' => 4,
+				'notnull' => true
+			),
+			'quest' => array(
+				'type' => 'text',
+				'length' => 300,
+				'notnull' => true
+			),
+			'datetime' => array(
+				'type' => 'timestamp'
+			)
+	);
+	
+	$ilDB->createTable("rep_robj_xpdl_quests", $questsTableFields, true);
+	$ilDB->addPrimaryKey("rep_robj_xpdl_quests", array("pad_id", "quest_id"));
+	 */	
 ?>

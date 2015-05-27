@@ -72,8 +72,9 @@ class ilObjEtherpadLiteGUI extends ilObjectPluginGUI
             case "showContent": // list all commands that need read permission here
             case "agreePolicy":
             case "revokeConsent":
+            case "revokeQuestions":
             case "inspectPolicies":
-                //case "...":
+            case "requestForHelp":
                 $this->checkPermission("read");
                 $this->$cmd();
                 break;
@@ -127,7 +128,7 @@ class ilObjEtherpadLiteGUI extends ilObjectPluginGUI
         
         
         // tab for the "policy agreements" command
-        if($this->object->getRequirePolicyConsent())
+        if($this->object->getCTAffiliated())
         {
         	include_once("./Customizing/global/plugins/Services/Repository/RepositoryObject/EtherpadLite/classes/class.ilEtherpadLiteUser.php");
         	$this->EtherpadLiteUser = new ilEtherpadLiteUser();
@@ -135,9 +136,19 @@ class ilObjEtherpadLiteGUI extends ilObjectPluginGUI
         	{
         		if ($ilAccess->checkAccess("read", "", $this->object->getRefId()))
         		{
-        			$ilTabs->addTab("agreement", "Einwilligungen (Einsicht)", $ilCtrl->getLinkTarget($this, "inspectPolicies"));
+        			$ilTabs->addTab("agreement", "Einwilligungen / Spielregeln", $ilCtrl->getLinkTarget($this, "inspectPolicies"));
         		}
         	}        	
+        }
+        
+        
+        // eagle eye
+        if($this->object->getCTAffiliated())
+        {
+	        if ($ilAccess->checkAccess("read", "", $this->object->getRefId()))
+	        {
+	        	$ilTabs->addTab("requestForHelp", "Eagle Eye (Bitte um Hilfe)", $ilCtrl->getLinkTarget($this, "requestForHelp"));
+	        }
         }
 
     }
@@ -187,14 +198,46 @@ class ilObjEtherpadLiteGUI extends ilObjectPluginGUI
         $ta = new ilTextAreaInputGUI($this->txt("description"), "desc");
         $this->form->addItem($ta);
 	        
-        // online
+        //online
         $cb = new ilCheckboxInputGUI($this->lng->txt("online"), "online");
         $this->form->addItem($cb);
+
+// 	    // time restriction
+// 		$restriction = new ilRadioGroupInputGUI($this->txt("time_restriction"), "time_restriction");
+// 			$offline = new ilRadioOption($this->txt("offline"),"offline", null);
+// 		    $now = new ilRadioOption($this->txt("online"),"online", null);
+// 		    $timeframe = new ilRadioOption($this->txt("restricted"),"restricted", null);
+		    	
+// 		    	include_once("./Services/Form/classes/class.ilDateDurationInputGUI.php");
+// 		    	$duration = new ilDateDurationInputGUI("Zeitraum", "duration", null);
+// 		    	$duration->setShowTime(true);
+// 		    	$duration->setMinuteStepSize("15");
+		    	
+// 		    $timeframe->addSubItem($duration);
+
+// 		$restriction->addOption($offline);
+// 		$restriction->addOption($now);
+// 		$restriction->addOption($timeframe);		    
+// 		$this->form->addItem($restriction);
         
-		// require policy consent?
-		$pc = new ilCheckboxInputGUI("&lt;c.t.&gt; Einwilligungen notwendig?", "require_policy_consent");
-		$pc->setInfo("&lt;c.t.&gt;: Einwilligung in die datenschutz- und urheberrechtlichen Erklärungen sowie in das Regelwerk notwendig?");
-        $this->form->addItem($pc);
+        
+        // pad is a c.t.-Pad ?
+        $ct = new ilCheckboxInputGUI("&lt;c.t.&gt;", "ct_affiliated");
+        $ct->setInfo("Schaltet die für das &lt;c.t.&gt;-Projekt speziellen Funktionen ein, z.B. Einwilligungen und 'Eagle Eye'.");
+			
+			// lecturer mail
+			$lm = new ilRadioGroupInputGUI("E-Mail-Adresse des Dozenten", "ct_eagle_eye_mail");
+				$option_owner = new ilRadioOption(ilObjUser::_lookupEmail($this->object->getOwner()),"owner", "Besitzer des Pads");
+				$lm->addOption($option_owner);
+				$option_other = new ilRadioOption("Andere","other", null);
+					$mail = new ilEMailInputGUI("E-Mail-Adresse", "other_lecturer_mail");
+					$mail->setInfo("Bitte verwenden Sie nur Uni-interne E-Mail-Adressen.");
+        			$option_other->addSubItem($mail);
+				$lm->addOption($option_other);
+			$ct->addSubItem($lm);
+	        
+	    $this->form->addItem($ct);
+	    
               
         // Show Elements depending on settings in the administration of the plugin
         include_once("./Customizing/global/plugins/Services/Repository/RepositoryObject/EtherpadLite/classes/class.ilEtherpadLiteConfig.php");
@@ -384,7 +427,18 @@ class ilObjEtherpadLiteGUI extends ilObjectPluginGUI
         $values["show_timeline"]= $this->object->getShowTimeline();
         $values["read_only"]= $this->object->getReadOnly();
         $values["author_identification"]     = $this->object->getAuthorIdentification();
-        $values["require_policy_consent"]     = $this->object->getRequirePolicyConsent();
+        $values["ct_affiliated"]     = $this->object->getCTAffiliated();
+               
+        if($this->object->getCTEagleEyeMail() == "owner")
+        {
+        	$values["ct_eagle_eye_mail"] = "owner";
+        }
+        else
+        {
+        	$values["ct_eagle_eye_mail"] = "other";
+        	$values["other_lecturer_mail"] = $this->object->getCTEagleEyeMail();
+        }			
+        
         
         $this->form->setValuesByArray($values);
     }
@@ -417,7 +471,16 @@ class ilObjEtherpadLiteGUI extends ilObjectPluginGUI
             $this->object->setShowTimeline($this->form->getInput("show_timeline"));
             $this->object->setReadOnly($this->form->getInput("read_only"));
             $this->object->setAuthorIdentification($this->form->getInput("author_identification"));
-            $this->object->setRequirePolicyConsent($this->form->getInput("require_policy_consent"));
+            $this->object->setCTAffiliated($this->form->getInput("ct_affiliated"));
+            
+            if($this->form->getInput("ct_eagle_eye_mail") == "owner")
+            {
+            	$this->object->setCTEagleEyeMail("owner");
+            }
+            else
+            {
+            	$this->object->setCTEagleEyeMail($this->form->getInput("other_lecturer_mail"));
+            }
 
             $this->object->update();
             ilUtil::sendSuccess($lng->txt("msg_obj_modified"), true);
@@ -479,6 +542,26 @@ class ilObjEtherpadLiteGUI extends ilObjectPluginGUI
         }
 		$ilCtrl->redirect($this, "showContent");
     }
+    
+//
+// revoke questions
+// !!! only for demonstration !!!
+//
+    function revokeQuestions()
+    {
+    	global $lng, $ilCtrl;
+    	 
+    	include_once("./Customizing/global/plugins/Services/Repository/RepositoryObject/EtherpadLite/classes/class.ilEtherpadLiteQuests.php");
+    	$this->EtherpadLiteQuests = new ilEtherpadLiteQuests();
+    	$this->EtherpadLiteQuests->setPadId($this->object->getEtherpadLiteID());
+    
+    	if($this->EtherpadLiteQuests->revokeQuestions())	{
+    		// ilUtil::sendSuccess($lng->txt("msg_obj_modified"), true);
+    	} else {
+    		ilUtil::sendFailure("error", true);
+    	}
+    	$ilCtrl->redirect($this, "showContent");
+    }
 
     
 //
@@ -489,7 +572,7 @@ class ilObjEtherpadLiteGUI extends ilObjectPluginGUI
 		global $tpl, $ilTabs, $ilCtrl;
 		$ilTabs->activateTab("agreement");
 		
-		$policiesTpl = new ilTemplate("tpl.policies.html", true, true, "Customizing/global/plugins/Services/Repository/RepositoryObject/EtherpadLite");
+		$policiesTpl = new ilTemplate("tpl.policies.html", true, true, "./Customizing/global/plugins/Services/Repository/RepositoryObject/EtherpadLite");
 		
 		/**
 		 * MODALs
@@ -515,7 +598,101 @@ class ilObjEtherpadLiteGUI extends ilObjectPluginGUI
 		$tpl->setContent($policiesTpl->get());
 	}
    
-    
+//
+// eagle eye (request for help)
+//
+	/**
+	 * Request for help
+	 */
+	function requestForHelp()
+	{
+		
+		global $tpl, $ilTabs, $ilCtrl, $ilUtil;
+		$questquota = 2;
+		$ilTabs->activateTab("requestForHelp");
+		
+		include_once("./Customizing/global/plugins/Services/Repository/RepositoryObject/EtherpadLite/classes/class.ilEtherpadLiteQuests.php");
+		$this->EtherpadLiteQuests = new ilEtherpadLiteQuests();
+		$this->EtherpadLiteQuests->setPadId($this->object->getEtherpadLiteID());
+		
+		
+		$customTpl = new ilTemplate("tpl.requestforhelp.html", true, true, "./Customizing/global/plugins/Services/Repository/RepositoryObject/EtherpadLite");
+		$customTpl->setVariable("QUESTQUOTA", $questquota);
+		$customTpl->setVariable("QUESTLINK",$ilCtrl->getLinkTarget($this, "requestForHelp"));
+		
+		// save to DB, if POST and quota not achieved
+		if(isset($_POST["quest-submit"]) && $this->EtherpadLiteQuests->numberOfQuests() < $questquota)
+		{
+			global $ilUser;
+
+			include_once("./Customizing/global/plugins/Services/Repository/RepositoryObject/EtherpadLite/classes/class.ilEtherpadLiteConfig.php");
+			$this->adminSettings = new ilEtherpadLiteConfig();
+			
+			$this->EtherpadLiteQuests->setUsername(
+					(!$this->adminSettings->getValue("author_identification_conf") ? 
+							rawurlencode($ilUser->getFullname()) : 
+							$this->constructAuthorIdentification($this->object->getAuthorIdentification())));
+			$this->EtherpadLiteQuests->setQuest(ilUtil::stripSlashes($_POST["quest-input"]));
+			
+			if($this->EtherpadLiteQuests->addQuest())
+			{ 
+				// to do: send mail to DOZENT
+				$mail_to = ($this->object->getCTEagleEyeMail() == "owner") ? ilObjUser::_lookupEmail($this->object->getOwner()) : $this->object->getCTEagleEyeMail();
+				$subject = "compliant teamwork | Neue Frage";
+				
+				$headers = "From: Anita.huber@uni-passau.de\r\n";
+				$headers .= "MIME-Version: 1.0\r\n";
+				$headers .= "Content-Type: text/html; charset=ISO-8859-1\r\n";
+				
+				$message = '<html><body>';
+				$message .= '<h1>Compliant Teamwork: Eine neue Frage!</h1>';
+				$message .= '<p>Sie bekommen diese E-Mail, weil Sie als Dozent für eine "compliant teamwork"-Klausur eingetragen sind.</p>';
+				$message .= '<p><a href="'. $ilCtrl->getLinkTarget($this, "requestForHelp") .'">Zur Frage &gt;&gt;</a></p>';
+				$message .= '</body></html>';
+				
+				if(mail($mail_to, $subject, $message, $headers))
+				{
+					ilUtil::sendSuccess("Frage gesendet!", true);
+				}
+				else 
+				{
+					ilUtil::sendError("E-Mail konnte nicht gesendet werden!", true);
+				}
+			}
+		}
+		
+		// hide form, if quota achieved
+		if($this->EtherpadLiteQuests->numberOfQuests() < $questquota)
+		{
+			$customTpl->setVariable("FORMDIV", "block");
+		}
+		else
+		{
+			$customTpl->setVariable("FORMDIV", "none");
+		}
+		
+		// list all quests
+		$list = "";
+		if($this->EtherpadLiteQuests->numberOfQuests() > 0)
+		{		
+			include_once("./Services/UIComponent/Panel/classes/class.ilPanelGUI.php");
+			foreach ($this->EtherpadLiteQuests->getQuests() as $row)
+			{
+				$panel = ilPanelGUI::getInstance();
+				$panel->setHeading($row["username"]." schrieb am ". $row["created_at"]);
+				$panel->setBody($row["quest"]);
+				$panel->setHeadingStyle(ilPanelGUI::HEADING_STYLE_SUBHEADING);
+				$list .= $panel->getHTML();
+			}
+		}
+		
+		// !only fr demonstration !
+		$customTpl->setVariable("REVOKETLINK",$ilCtrl->getLinkTarget($this, "revokeQuestions"));
+			
+		$tpl->setContent($customTpl->get().$list);
+		
+	}
+	
 //
 // Show content
 //
@@ -553,7 +730,7 @@ class ilObjEtherpadLiteGUI extends ilObjectPluginGUI
 				$padID = $this->object->getReadOnlyID(); 
 				ilUtil::sendInfo($this->txt("read_only_notice"), true);
 			} 
-			elseif($this->object->getRequirePolicyConsent() && !$this->EtherpadLiteUser->getPolicyAgreement())
+			elseif($this->object->getCTAffiliated() && !$this->EtherpadLiteUser->getPolicyAgreement())
 			{
 				$padID = $this->object->getReadOnlyID();
 				
@@ -666,7 +843,7 @@ class ilObjEtherpadLiteGUI extends ilObjectPluginGUI
     					"pdf" => $rootdir.$this->adminSettings->getValue("policy_paths_privacy_pdf")
     			),
     			"IPropPolicy" => array(
-    					"heading" => "Urheberschaft",
+    					"heading" => "Urheberrecht",
     					"content" => file_get_contents($rootdir.$this->adminSettings->getValue("policy_paths_iprop_html")),
     					"pdf" => $rootdir.$this->adminSettings->getValue("policy_paths_iprop_pdf")
     			),

@@ -55,10 +55,14 @@ class ilEtherpadLiteUser
 		foreach($HashArray as $type => $hash)
 		{
 			$hashText .= $type . ":" . $hash ."#"; 
-		}		
+		}
+		
+		$now = new DateTime();
+		
 		return $ilDB->manipulate("UPDATE rep_robj_xpdl_user SET 
 				policy_agreement = " . $ilDB->quote(1, "boolean") . ",
-				hashes = " . $ilDB->quote($hashText, "text") . " 
+				hashes = " . $ilDB->quote($hashText, "text") . ",
+				datetime = " . $ilDB->quote($now->format('Y-m-d H:i:s'), "text") . "
 				WHERE username = " . $ilDB->quote($this->getUsername(), "text"));
 	}
 	
