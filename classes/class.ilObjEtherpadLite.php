@@ -184,7 +184,7 @@ class ilObjEtherpadLite extends ilObjectPlugin
         $readOnlyID =  $this->getEtherpadLiteConnection()->getReadOnlyID($this->getEtherpadLiteID());
 		$this->setReadOnlyID($readOnlyID->readOnlyID);
 
-        $ilDB->manipulate("INSERT INTO rep_robj_xpdl_data (id, is_online, epadl_id,show_controls,line_numbers,show_colors,show_chat,monospace_font,show_style,show_list,show_redo,show_coloring,show_heading,show_import_export, show_timeline,old_pad, read_only_id, read_only, require_policy_consent) VALUES (" .
+        $ilDB->manipulate("INSERT INTO rep_robj_xpdl_data (id, is_online, epadl_id,show_controls,line_numbers,show_colors,show_chat,monospace_font,show_style,show_list,show_redo,show_coloring,show_heading,show_import_export, show_timeline,old_pad, read_only_id, read_only, ct_affiliated) VALUES (" .
             $ilDB->quote($this->getId(), "integer") . "," .
             $ilDB->quote(0, "integer") . "," .
             $ilDB->quote($this->getEtherpadLiteID(), "text") . "," .
