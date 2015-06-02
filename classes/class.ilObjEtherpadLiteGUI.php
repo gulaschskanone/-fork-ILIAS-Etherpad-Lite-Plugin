@@ -751,9 +751,9 @@ class ilObjEtherpadLiteGUI extends ilObjectPluginGUI
 					include_once("./Services/User/classes/class.ilUserDefinedFields.php");
 					$user_defined_fields =& ilUserDefinedFields::_getInstance();
 					$field_definition = $user_defined_fields->getDefinition($field_id);
-					$profileSettingsLink = "<a href='ilias.php?baseClass=ilPersonalDesktopGUI&cmd=jumpToProfile'>".$lng->txt("personal_profile")."</a>";
+					$profileSettingsLink = "<a href='ilias.php?baseClass=ilPersonalDesktopGUI&cmd=jumpToProfile' target='_blank'>persönlichen ILIAS-Profil</a>";
 					$noNameMsg = $this->txt("no_name_set")."! ";
-					$noNameMsg .= $lng->txt("form_empty_fields")." <i>".$field_definition["field_name"]."</i> ".$this->txt("at")." $profileSettingsLink.";
+					$noNameMsg .= "<br/>Bitte füllen Sie das Feld <i>".$field_definition["field_name"]."</i> in ihrem ". $profileSettingsLink ." (neues Fenster öffnet sich). <br/>Nach dem Speichern kommen Sie wieder auf dieses Fenster zurück und laden die Seite neu (z.B. mit der Taste <i>F5</i>)";
 					ilUtil::sendFailure($noNameMsg, true);
 				}
 			}
